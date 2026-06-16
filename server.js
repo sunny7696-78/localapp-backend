@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -15,7 +15,10 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/shops', require('./routes/shops'));
-app.get('/', (req, res) => res.json({ message: 'LocalApp API Running' }));
+app.use('/api/promos', require('./routes/promos'));
+app.use('/api/addresses', require('./routes/addresses'));
+app.use('/api/wallet', require('./routes/wallet'));
+app.get('/', (req, res) => res.json({ message: 'LocalApp API Running V3 ✅' }));
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => { console.log('MongoDB Connected'); app.listen(process.env.PORT, () => console.log('Server running on port ' + process.env.PORT)); })
+  .then(() => { console.log('MongoDB Connected ✅'); app.listen(process.env.PORT, () => console.log('Server on port ' + process.env.PORT)); })
   .catch(err => console.error('DB Error:', err));
