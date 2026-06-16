@@ -1,29 +1,28 @@
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-
+ 
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Restaurant = require('./models/Restaurant');
-
+ 
 async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Connected to MongoDB');
-
+ 
   await User.deleteMany({});
   await Product.deleteMany({});
   await Restaurant.deleteMany({});
-
-  const adminPass = await bcrypt.hash('admin123', 10);
-  const userPass = await bcrypt.hash('user123', 10);
-
-  const admin = await User.create({ name: 'Admin', phone: '9999999999', password: adminPass, role: 'admin', address: { area: 'Doraha Mandi', city: 'Doraha, Ludhiana' } });
-  await User.create({ name: 'Harpreet Driver', phone: '9876543210', password: userPass, role: 'driver', vehicle: { type: 'bike', number: 'PB10AB1234', model: 'Honda Activa' }, isAvailable: true, address: { area: 'Doraha Bus Stand', city: 'Doraha' } });
-  await User.create({ name: 'Gurpreet Singh', phone: '9876500001', password: userPass, role: 'customer', address: { street: 'H.No. 45, Gali 3', area: 'Doraha Mandi', city: 'Doraha, Ludhiana' } });
-  await User.create({ name: 'Sharma Store', phone: '9876500002', password: userPass, role: 'vendor', address: { street: 'Main Market', area: 'Doraha Mandi', city: 'Doraha' } });
-
+ 
+  // FIX: Plain text password do — model apne aap hash karega
+  const admin = await User.create({ name: 'Admin', phone: '9999999999', password: 'admin123', role: 'admin', address: { area: 'Doraha Mandi', city: 'Doraha, Ludhiana' } });
+  await User.create({ name: 'Harpreet Driver', phone: '9876543210', password: 'user123', role: 'driver', vehicle: { type: 'bike', number: 'PB10AB1234', model: 'Honda Activa' }, isAvailable: true, address: { area: 'Doraha Bus Stand', city: 'Doraha' } });
+  await User.create({ name: 'Gurpreet Singh', phone: '9876500001', password: 'user123', role: 'customer', address: { street: 'H.No. 45, Gali 3', area: 'Doraha Mandi', city: 'Doraha, Ludhiana' } });
+  await User.create({ name: 'Sharma Store', phone: '9876500002', password: 'user123', role: 'vendor', address: { street: 'Main Market', area: 'Doraha Mandi', city: 'Doraha' } });
+ 
   console.log('✅ Users created');
-
+ 
   const products = [
     { name: 'Amul Gold Milk 1L', price: 66, mrp: 70, category: 'dairy', unit: 'litre', stock: 50 },
     { name: 'Amul Butter 500g', price: 245, mrp: 265, category: 'dairy', unit: 'pack', stock: 30 },
@@ -50,10 +49,10 @@ async function seed() {
     { name: 'Vim Bar 3-pack', price: 45, mrp: 55, category: 'household', unit: 'pack', stock: 40 },
     { name: 'Dettol Soap 3-pack', price: 88, mrp: 105, category: 'personal_care', unit: 'pack', stock: 30 },
   ].map(p => ({ ...p, vendor: admin._id }));
-
+ 
   await Product.insertMany(products);
   console.log('✅ Products created (Doraha specific)');
-
+ 
   await Restaurant.create({
     name: 'Doraha Dhaba', owner: admin._id,
     cuisine: ['Punjabi', 'North Indian', 'Dal Makhani'],
@@ -70,7 +69,7 @@ async function seed() {
       { name: 'Chawal', price: 60, category: 'Rice', isVeg: true },
     ]
   });
-
+ 
   await Restaurant.create({
     name: 'Sharma Fast Food', owner: admin._id,
     cuisine: ['Burger', 'Momos', 'Chowmein', 'Fast Food'],
@@ -87,7 +86,7 @@ async function seed() {
       { name: 'Cold Drink', price: 30, category: 'Drinks', isVeg: true },
     ]
   });
-
+ 
   await Restaurant.create({
     name: 'Sidhwan Sweets', owner: admin._id,
     cuisine: ['Mithai', 'Samosa', 'Kachori', 'Chai'],
@@ -102,7 +101,7 @@ async function seed() {
       { name: 'Chai', price: 15, category: 'Drinks', isVeg: true },
     ]
   });
-
+ 
   await Restaurant.create({
     name: 'Doraha Chaat Corner', owner: admin._id,
     cuisine: ['Chaat', 'Golgappe', 'Tikki', 'Street Food'],
@@ -116,7 +115,7 @@ async function seed() {
       { name: 'Dahi Bhalle', price: 80, category: 'Chaat', isVeg: true },
     ]
   });
-
+ 
   console.log('✅ Restaurants created (Doraha)');
   console.log('\n🎉 Database seeded for DORAHA!');
   console.log('--- Login Credentials ---');
@@ -126,5 +125,6 @@ async function seed() {
   console.log('Vendor:   9876500002 / user123');
   process.exit(0);
 }
-
+ 
 seed().catch(err => { console.error(err); process.exit(1); });
+ 
