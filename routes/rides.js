@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Ride = require('../models/Ride');
 const { protect, driverOnly } = require('../middleware/auth');
+const { calculateRideCommission } = require('../utils/commission');
 
 // Fare calculation utility
 const calculateFare = (vehicleType, distance) => {
@@ -17,6 +18,7 @@ router.post('/', protect, async (req, res) => {
     const distance = Math.round(Math.random() * 8 + 1); // simulated; replace with real geo calc
     const fare = calculateFare(vehicleType, distance);
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const { commissionRate, platformCommission, driverPayout } = calculateRideCommission(fare);
 
     const ride = await Ride.create({
       user: req.user._id,
@@ -26,6 +28,9 @@ router.post('/', protect, async (req, res) => {
       distance,
       duration: Math.round(distance * 3 + 5),
       fare,
+      commissionRate,
+      platformCommission,
+      driverPayout,
       paymentMethod: paymentMethod || 'cod',
       otp,
     });

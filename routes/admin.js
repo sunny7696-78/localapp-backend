@@ -21,9 +21,30 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       { $match: { status: 'delivered' } },
       { $group: { _id: null, total: { $sum: '$total' } } }
     ]);
+
+    // Commission earnings — sirf delivered orders aur completed rides se
+    const orderCommission = await Order.aggregate([
+      { $match: { status: 'delivered' } },
+      { $group: { _id: '$type', commission: { $sum: '$platformCommission' }, count: { $sum: 1 } } }
+    ]);
+    const rideCommission = await Ride.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, commission: { $sum: '$platformCommission' }, count: { $sum: 1 } } }
+    ]);
+
+    const commissionByType = { food: 0, grocery: 0, ride: 0 };
+    orderCommission.forEach(c => { commissionByType[c._id] = c.commission; });
+    commissionByType.ride = rideCommission[0]?.commission || 0;
+
+    const totalCommission = commissionByType.food + commissionByType.grocery + commissionByType.ride;
+
     res.json({
       users, orders, rides, products, restaurants,
       revenue: revenue[0]?.total || 0,
+      commission: {
+        total: totalCommission,
+        byType: commissionByType,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
