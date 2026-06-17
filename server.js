@@ -20,6 +20,7 @@ app.use('/api/addresses', require('./routes/addresses'));
 app.use('/api/wallet', require('./routes/wallet'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/location', require('./routes/location').router);
 app.get('/', (req, res) => res.json({ message: 'LocalApp API V4 Running ✅ - Doraha, Ludhiana' }));
 mongoose.connect(process.env.MONGO_URI)
   .then(() => { console.log('MongoDB Connected ✅'); app.listen(process.env.PORT || 5000, () => console.log('Server running ✅')); })
