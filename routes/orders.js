@@ -6,10 +6,11 @@ const { protect, driverOnly } = require('../middleware/auth');
 // @POST /api/orders - place order
 router.post('/', protect, async (req, res) => {
   try {
-    const { type, items, deliveryAddress, restaurantId, paymentMethod, notes } = req.body;
+    const { type, items, deliveryAddress, restaurantId, paymentMethod, paymentStatus, notes, discount } = req.body;
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const deliveryFee = 20;
+    const deliveryFee = subtotal >= 299 ? 0 : 20;
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const finalDiscount = discount || 0;
 
     const order = await Order.create({
       user: req.user._id,
@@ -19,8 +20,10 @@ router.post('/', protect, async (req, res) => {
       deliveryAddress,
       subtotal,
       deliveryFee,
-      total: subtotal + deliveryFee,
+      discount: finalDiscount,
+      total: subtotal + deliveryFee - finalDiscount,
       paymentMethod: paymentMethod || 'cod',
+      paymentStatus: paymentMethod === 'online' && paymentStatus === 'paid' ? 'paid' : 'pending',
       otp,
       notes,
       estimatedTime: type === 'food' ? '30-45 min' : '15-20 min',
