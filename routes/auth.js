@@ -70,4 +70,21 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
+// @POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { phone, newPassword } = req.body;
+    if (!phone || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'Phone aur kam se kam 6 character ka password chahiye' });
+    }
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(404).json({ message: 'User nahi mila' });
+    user.password = newPassword; // pre-save hook hashes it
+    await user.save();
+    res.json({ message: 'Password reset ho gaya' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
