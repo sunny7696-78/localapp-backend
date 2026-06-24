@@ -30,11 +30,9 @@ const orderSchema = new mongoose.Schema({
   deliveryFee: { type: Number, default: 20 },
   discount: { type: Number, default: 0 },
   total: Number,
-  commissionRate: { type: Number, default: 0 }, // % jo LocalApp ne kaata
-  platformCommission: { type: Number, default: 0 }, // ₹ amount jo LocalApp ka profit hai
-  vendorPayout: { type: Number, default: 0 }, // ₹ amount jo vendor/shop ko milega
   paymentMethod: { type: String, enum: ['cod', 'online'], default: 'cod' },
   paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
+  razorpayPaymentId: String,
   estimatedTime: String,
   otp: String, // delivery OTP
   notes: String,

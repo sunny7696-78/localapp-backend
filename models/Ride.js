@@ -24,11 +24,9 @@ const rideSchema = new mongoose.Schema({
   fare: Number,
   distance: Number, // in km
   duration: Number, // in minutes
-  commissionRate: { type: Number, default: 0 }, // % jo LocalApp ne kaata
-  platformCommission: { type: Number, default: 0 }, // ₹ amount jo LocalApp ka profit hai
-  driverPayout: { type: Number, default: 0 }, // ₹ amount jo driver ko milega
   paymentMethod: { type: String, enum: ['cod', 'online'], default: 'cod' },
   paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
+  razorpayPaymentId: String,
   otp: String,
   rating: Number,
   review: String,
