@@ -2,14 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const { protect, driverOnly } = require('../middleware/auth');
+const { notifyOrderPlaced, notifyStatusUpdate } = require('../utils/whatsapp');
+const { calculateOrderCommission } = require('../utils/commission');
 
 // @POST /api/orders - place order
 router.post('/', protect, async (req, res) => {
   try {
-    const { type, items, deliveryAddress, restaurantId, paymentMethod, notes } = req.body;
+    const { type, items, deliveryAddress, restaurantId, paymentMethod, paymentStatus, notes, discount } = req.body;
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const deliveryFee = 20;
+    const deliveryFee = subtotal >= 299 ? 0 : 20;
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const finalDiscount = discount || 0;
+    const { commissionRate, platformCommission, vendorPayout } = calculateOrderCommission(type, subtotal);
 
     const order = await Order.create({
       user: req.user._id,
@@ -19,13 +23,21 @@ router.post('/', protect, async (req, res) => {
       deliveryAddress,
       subtotal,
       deliveryFee,
-      total: subtotal + deliveryFee,
+      discount: finalDiscount,
+      total: subtotal + deliveryFee - finalDiscount,
+      commissionRate,
+      platformCommission,
+      vendorPayout,
       paymentMethod: paymentMethod || 'cod',
+      paymentStatus: paymentMethod === 'online' && paymentStatus === 'paid' ? 'paid' : 'pending',
       otp,
       notes,
       estimatedTime: type === 'food' ? '30-45 min' : '15-20 min',
     });
     res.status(201).json({ ...order._doc, otp });
+
+    // WhatsApp notification — response ke baad bhejo, customer ko wait nahi karana
+    notifyOrderPlaced(req.user.phone, req.user.name, order._id.toString(), order.total, otp);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -62,6 +74,15 @@ router.get('/:id', protect, async (req, res) => {
       .populate('user', 'name phone')
       .populate('driver', 'name phone vehicle');
     if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Security: only the order's own customer, the assigned driver, or an admin can view it
+    const isOwner = order.user?._id?.toString() === req.user._id.toString();
+    const isAssignedDriver = order.driver?._id?.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAssignedDriver && !isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to view this order' });
+    }
+
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -72,7 +93,7 @@ router.get('/:id', protect, async (req, res) => {
 router.put('/:id/status', protect, async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('user', 'name phone');
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     order.status = status;
@@ -81,6 +102,11 @@ router.put('/:id/status', protect, async (req, res) => {
     }
     await order.save();
     res.json(order);
+
+    // WhatsApp notification
+    if (order.user?.phone) {
+      notifyStatusUpdate(order.user.phone, order.user.name, order._id.toString(), status);
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

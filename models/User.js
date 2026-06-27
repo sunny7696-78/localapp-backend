@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
   address: {
     street: String,
     area: String,
-    city: { type: String, default: 'Ludhiana' },
+    city: { type: String, default: 'Doraha' },
     pincode: String,
     lat: Number,
     lng: Number,
